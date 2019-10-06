@@ -1,8 +1,8 @@
 ### Creative Commons Attribution-ShareAlike 3.0 Unported License
 Link to license summary: https://creativecommons.org/licenses/by-sa/3.0/
 
-Copyright (C) 2016-2019 Lin Song    
-Based on the work of Thomas Sarlandie (Copyright 2012)
+Based on the work of Lin Song (https://github.com/hwdsl2/docker-ipsec-vpn-server)
+Based on the work of Thomas Sarlandie
 
 <p>THE WORK (AS DEFINED BELOW) IS PROVIDED UNDER THE TERMS
 OF THIS CREATIVE COMMONS PUBLIC LICENSE ("CCPL" OR

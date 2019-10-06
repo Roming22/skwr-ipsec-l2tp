@@ -17,6 +17,13 @@
 # Attribution required: please include my name in any derivative and let me
 # know how you have improved it!
 
+# Run as root
+if [ "$USER" != "root" ]; then
+	echo "Running $0 as root"
+	sudo $0
+	exit $?
+fi
+
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 exiterr()  { echo "Error: $1" >&2; exit 1; }
@@ -382,4 +389,6 @@ mkdir -p /run/pluto /var/run/pluto /var/run/xl2tpd
 rm -f /run/pluto/pluto.pid /var/run/pluto/pluto.pid /var/run/xl2tpd.pid
 
 /usr/local/sbin/ipsec start
+# Let SKWR know that the container is up and running
+echo "[`hostname -s`] Started"
 exec /usr/sbin/xl2tpd -D -c /etc/xl2tpd/xl2tpd.conf

@@ -1,11 +1,9 @@
 FROM debian:stretch
-LABEL maintainer="Lin Song <linsongui@gmail.com>"
 
-ENV REFRESHED_AT 2019-06-10
 ENV SWAN_VER 3.29
 ENV L2TP_VER 1.3.12
 
-WORKDIR /opt/src
+WORKDIR /opt/module
 
 RUN apt-get -yqq update \
     && DEBIAN_FRONTEND=noninteractive \
@@ -28,8 +26,8 @@ RUN apt-get -yqq update \
     && printf 'USE_GLIBC_KERN_FLIP_HEADERS = true\nUSE_SYSTEMD_WATCHDOG = false\n' >> Makefile.inc.local \
     && make -s base \
     && make -s install-base \
-    && cd /opt/src \
-    && rm -rf "/opt/src/libreswan-${SWAN_VER}" \
+    && cd /opt/module \
+    && rm -rf "/opt/module/libreswan-${SWAN_VER}" \
     && wget -t 3 -T 30 -nv -O xl2tpd.tar.gz "https://github.com/xelerance/xl2tpd/archive/v${L2TP_VER}.tar.gz" \
     || wget -t 3 -T 30 -nv -O xl2tpd.tar.gz "https://debian.osuosl.org/debian/pool/main/x/xl2tpd/xl2tpd_${L2TP_VER}.orig.tar.gz" \
     && tar xzf xl2tpd.tar.gz \
@@ -37,8 +35,8 @@ RUN apt-get -yqq update \
     && cd "xl2tpd-${L2TP_VER}" \
     && make -s \
     && PREFIX=/usr make -s install \
-    && cd /opt/src \
-    && rm -rf "/opt/src/xl2tpd-${L2TP_VER}" \
+    && cd /opt/module \
+    && rm -rf "/opt/module/xl2tpd-${L2TP_VER}" \
     && apt-get -yqq remove \
          libnss3-dev libnspr4-dev pkg-config libpam0g-dev \
          libcap-ng-dev libcap-ng-utils libselinux1-dev \
@@ -48,9 +46,29 @@ RUN apt-get -yqq update \
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY ./run.sh /opt/src/run.sh
-RUN chmod 755 /opt/src/run.sh
+COPY module /opt/module
+RUN chmod 755 /opt/module/bin/run.sh
 
 EXPOSE 500/udp 4500/udp
 
-CMD ["/opt/src/run.sh"]
+#
+# Default skwr config
+#
+RUN groupadd -g 9999 skwr \
+ && useradd -r -u 9999 -g skwr skwr
+ENV PATH="/opt/module/bin:$PATH"
+ENTRYPOINT ["run.sh"]
+HEALTHCHECK --start-period=30s --interval=60s --timeout=5s --retries=3 \
+    CMD healthcheck.sh || exit 1
+
+RUN apt-get -yqq update \
+ && DEBIAN_FRONTEND=noninteractive \
+    apt-get -y --no-install-recommends install sudo \
+ && apt-get -y clean \
+ && echo 'Defaults  env_keep += "VPN_IPSEC_PSK"' > /etc/sudoers.d/skwr \
+ && echo 'Defaults  env_keep += "VPN_USER"' >> /etc/sudoers.d/skwr \
+ && echo 'Defaults  env_keep += "VPN_PASSWORD"' >> /etc/sudoers.d/skwr \
+ && echo 'skwr    ALL=(root) NOPASSWD: /opt/module/bin/run.sh' >> /etc/sudoers.d/skwr
+
+USER skwr
+
