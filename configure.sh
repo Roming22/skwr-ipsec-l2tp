@@ -41,13 +41,4 @@ create_secret(){
 	write_secret
 }
 
-update_repository(){
-	cd $SCRIPT_DIR
-	git remote | egrep "^upstream$" || git remote add upstream https://github.com/hwdsl2/docker-ipsec-vpn-server.git
-	git fetch upstream
-	git rebase upstream/master
-	cd - >/dev/null
-}
-
 create_secret
-update_repository
